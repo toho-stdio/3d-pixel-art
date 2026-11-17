@@ -1,90 +1,90 @@
-# Prompti và quy trình thực hiện — Vietnamese Tea Stall
+# Prompts and Workflow — Vietnamese Tea Stall
 
-Tài liệu này tổng hợp phiên làm việc xây dựng bộ tài sản Quán Trà Đá Vỉa Hè và tích hợp demo Texel Splatting. Nội dung phiên được **tóm lược và biên soạn lại**: các prompt mẫu bên dưới là template tái sử dụng, không phải trích dẫn nguyên văn. Không lưu transcript, ảnh tham chiếu, đường dẫn máy cá nhân, hội thoại ngoài phạm vi dự án hay thông tin bí mật vào kho công khai.
+This document summarizes the work session for building the Vietnamese sidewalk tea-stall asset library and integrating the Texel Splatting demo. The session content has been **summarized and rewritten**: the sample prompts below are reusable templates, not verbatim quotations. Do not store transcripts, reference images, personal machine paths, out-of-scope conversations, or confidential information in the public repository.
 
-## Yêu cầu ban đầu và thay đổi phạm vi
+## Initial requirements and scope change
 
-Yêu cầu đầu tiên tập trung vào tạo tài sản 3D theo ảnh tham chiếu, ưu tiên ghế nhựa đỏ và nón lá làm proof of concept, dùng TopoTopo độc quyền cho hình học/sản phẩm. Yêu cầu đó ban đầu nói không chỉnh renderer trong giai đoạn asset. Sau đó chủ dự án mở rộng và thay đổi phạm vi: làm song song thư viện tài sản và demo Texel Splatting, không chờ asset mới bắt đầu renderer. Thay đổi được ghi nhận trong hợp đồng dự án; không được hiểu yêu cầu ban đầu là cấm tích hợp renderer suốt dự án.
+The initial request focused on creating 3D assets from reference images, prioritizing a red plastic stool and a conical hat as a proof of concept, and using TopoTopo exclusively for geometry and production assets. It initially said not to modify the renderer during the asset phase. The project owner later expanded and changed the scope: build the asset library and Texel Splatting demo in parallel, without waiting for new assets before starting renderer work. This change is recorded in the project contract; the initial request must not be interpreted as prohibiting renderer integration for the entire project.
 
-Yêu cầu cốt lõi gồm:
+Core requirements:
 
-- Dùng ảnh tham chiếu làm chuẩn chính; ưu tiên dáng và nhận diện thật, không tự thêm chi tiết lớn không có căn cứ.
-- Giữ graph procedural có thể chỉnh sửa, sinh lặp lại, dùng schema TopoTopo đã tài liệu hóa; không dùng Blender hoặc dịch vụ tạo hình học 3D bên ngoài.
-- Xây GLB tĩnh theo hợp đồng: mét, Y-up, triangle mesh, normals, màu vật liệu opaque; mesh nhiều tên/vật liệu và hierarchy được xử lý ở loader.
-- Giữ nguyên baseline và kỹ thuật Texel Splatting; chứng minh cùng hình học chạy qua Direct, Cubemap và Splat.
-- Bắt đầu tích hợp bằng mock có nhãn rõ ràng để không chặn renderer khi tài sản thật chưa sẵn sàng.
-- Kiểm chứng bằng test, build, log và lần chạy thực tế; báo rõ điều gì chưa được thử.
+- Treat reference images as the primary source of truth; prioritize the actual shape and identifying features, and do not invent major unsupported details.
+- Keep procedural graphs editable and reproducible; use documented TopoTopo schemas. Do not use Blender or external 3D geometry generation services.
+- Produce static GLBs according to the contract: meters, Y-up, triangle meshes, normals, opaque material colors; support named multiple meshes/materials and hierarchy in the loader.
+- Preserve the Texel Splatting baseline and core technique; demonstrate the same geometry through Direct, Cubemap, and Splat.
+- Begin integration with clearly labeled mocks so renderer work is not blocked while production assets are unavailable.
+- Verify with tests, builds, logs, and actual runs; clearly state what has not been tested.
 
-## Mẫu prompt có thể tái sử dụng
+## Reusable prompt templates
 
-### 1. Prompt điều phối nhiều nhánh
-
-```text
-Hãy thực hiện dự án [PROJECT] tại [REPOSITORY]. Trước khi sửa, đọc hướng dẫn dự án, hợp đồng giao diện và tình trạng Git hiện tại.
-
-Chia công việc song song theo quyền sở hữu tệp không giao nhau:
-- Asset lead: [asset tool] độc quyền cho hình học/tài sản sản xuất; giữ graphs editable và cung cấp GLB, metadata, kiểm tra.
-- Demo lead: làm renderer/demo trong [demo directory]; không ghi đè thư mục tài sản hoặc lịch sử của upstream repo lồng nhau.
-- Coordinator: chốt asset contract, phối hợp checkpoint, rà soát tích hợp và kiểm chứng.
-
-Mỗi agent/child phải đặt chính xác model `openai-codex/gpt-6-luna` và thinking `high`. Không dùng alias không rõ ràng hoặc `:batch`; kiểm tra trạng thái/đầu ra agent, và khởi chạy lại đúng route nếu model lỗi.
-
-Không để nhánh demo chờ asset: dùng fixture tổng hợp được đánh dấu mock. Chốt contract trước khi tích hợp. Giữ baseline và kỹ thuật lõi. Ghi rõ ownership, dependencies, checkpoints, bằng chứng test và blockers. Không nhận một tính năng là hoàn tất nếu chưa có bằng chứng tương ứng.
-```
-
-### 2. Prompt tài sản tham chiếu — template
+### 1. Parallel-work coordination prompt
 
 ```text
-Tạo [ASSET] cho một quán trà đá vỉa hè Việt Nam từ ảnh tham chiếu đã cung cấp. Ảnh là nguồn sự thật chính. Trước khi dựng, mô tả ngắn silhouette, tỷ lệ, cấu trúc và phần nào chỉ là suy luận. Giữ các lỗ, khoảng trống, đường cong và đặc điểm nhận diện; không tự thêm chi tiết lớn không có căn cứ.
+Carry out project [PROJECT] in [REPOSITORY]. Before making changes, read the project instructions, interface contract, and current Git state.
 
-Chỉ dùng TopoTopo để tạo geometry và export sản xuất. Dùng schema/tool thực tế đã tài liệu hóa; không đoán node/parameter. Giữ graph rõ tên, editable, deterministic, có tham số kích thước và vật liệu. Thống nhất mét, Y-up, hướng trước +Z khi có ý nghĩa, origin tại mặt tiếp xúc nền.
+Split work in parallel with non-overlapping file ownership:
+- Asset lead: use [asset tool] exclusively for production geometry/assets; keep graphs editable and provide GLBs, metadata, and validation results.
+- Demo lead: work on the renderer/demo in [demo directory]; do not overwrite the asset directory or the history of a nested upstream repository.
+- Coordinator: finalize the asset contract, coordinate checkpoints, review integration, and verify.
 
-Tạo các góc nhìn front/side/top/3-quarter; so sánh với ảnh, nêu khác biệt, chỉnh graph rồi lặp lại. Kiểm tra bounds, normals/winding, vật liệu, triangle count, thành phần tách rời và các giới hạn topology. Export GLB theo contract. Báo chính xác file, kích thước, triangle/material count, kết quả validation và hạn chế; không tuyên bố fidelity hoặc kiểm tra chưa thực hiện.
+Every agent/child must set exactly model `openai-codex/gpt-6-luna` and thinking `high`. Do not use ambiguous aliases or `:batch`; inspect agent status/output, and rerun with the correct route if the model fails.
+
+Do not make the demo wait for assets: use labeled synthetic fixtures. Finalize the contract before integration. Preserve the baseline and core technique. Record ownership, dependencies, checkpoints, test evidence, and blockers. Do not claim a feature is complete without corresponding evidence.
 ```
 
-Ghi chú dự án thiết yếu: món nội thất trong ảnh tham chiếu là **ghế thấp không lưng**, không phải ghế có tựa. Nón lá là nón hình nón rộng màu ngà với vành mảnh; phần không nhìn thấy phải ghi rõ là suy luận. Các đạo cụ khác không có ảnh cận cảnh nên tỷ lệ/phom dáng cần được mô tả là giả định, không phải đối chiếu ảnh.
-
-### 3. Prompt renderer GLB và ba đường render — template
+### 2. Reference-based asset prompt — template
 
 ```text
-Trong [DEMO_REPO], tích hợp GLB tĩnh theo contract [LINK]. Trước hết kiểm tra baseline upstream, lệnh cài đặt/test/build và các giả định scene-specific. Không thay thuật toán Texel Splatting nếu không có lý do và kiểm chứng cụ thể.
+Create [ASSET] for a Vietnamese sidewalk tea stall based on the supplied reference image. The image is the primary source of truth. Before modeling, briefly describe the silhouette, proportions, structure, and any parts that are inferred. Preserve openings, gaps, curves, and identifying features; do not invent major unsupported details.
 
-Tạo adapter GLB có phạm vi được ghi rõ: hierarchy/TRS, positions/normals, triangle indices, màu base-color opaque, bounds, transforms và nhiều mesh/material. Từ đầu dùng fixture mock nhiều mesh/màu; ghi nhãn mock, không trình bày như tài sản sản xuất.
+Use TopoTopo only to create geometry and export production assets. Use actual documented schemas/tools; do not guess node types or parameters. Keep the graph clearly named, editable, deterministic, and parameterized for dimensions and materials. Use meters, Y-up, front +Z where meaningful, and an origin at the ground contact plane.
 
-Render cùng scene qua Direct, Cubemap và Splat bằng các đường code thực tế của từng mode; không che fallback bằng nhãn sai. Khi asset thật sẵn sàng, thay đường dẫn/cấu hình, không viết lại renderer. Kiểm tra mesh/material, transforms, normals, winding, shadows và lỗi console/shader. Ghi test/build/browser evidence theo đúng phạm vi; không khẳng định hỗ trợ browser, GPU, mobile hay deployment nếu chưa thử.
+Create front/side/top/three-quarter views; compare them with the image, describe differences, revise the graph, and iterate. Check bounds, normals/winding, materials, triangle count, disconnected components, and topology limitations. Export a GLB according to the contract. Report exact files, dimensions, triangle/material counts, validation results, and limitations; do not claim fidelity or tests that were not performed.
 ```
 
-### 4. Prompt kiểm tra/handoff
+Essential project note: the furniture shown in the reference is a **low backless stool**, not a chair with a back. The conical hat is a broad ivory cone with a narrow rim; explicitly identify unseen parts as inferred. Other props have no close-up references, so their proportions/forms must be described as assumptions, not as image-matched.
+
+### 3. GLB renderer and three render paths prompt — template
 
 ```text
-Trước khi kết luận: chạy unit tests, type/check, production build và smoke test phù hợp. Nếu UI/runtime là mục tiêu, chạy demo và thao tác luồng chính khi có thể. So hash asset đã tích hợp với nguồn; tách test fixture khỏi asset sản xuất. Rà soát diff và Git root lẫn repository lồng nhau, loại trừ secrets, local paths, ảnh/asset không được phép phát hành. Báo rõ PASS/FAIL, lệnh và artifact evidence, giới hạn còn tồn tại, điều không kiểm thử, commit và trạng thái remote.
+In [DEMO_REPO], integrate static GLB assets according to contract [LINK]. First inspect the upstream baseline, install/test/build commands, and scene-specific assumptions. Do not change the Texel Splatting algorithm without a specific reason and verification.
+
+Create a GLB adapter with a documented scope: hierarchy/TRS, positions/normals, triangle indices, opaque base-color, bounds, transforms, and multiple meshes/materials. Start with a multi-mesh/color mock fixture; label it as a mock and do not present it as a production asset.
+
+Render the same scene through Direct, Cubemap, and Splat using each mode's actual code path; do not disguise a fallback with an inaccurate label. When production assets are ready, switch paths/configuration rather than rewriting the renderer. Check mesh/materials, transforms, normals, winding, shadows, and console/shader errors. Record test/build/browser evidence within its actual scope; do not claim browser, GPU, mobile, or deployment support unless it has been tested.
 ```
 
-## Quy trình đã thực hiện
+### 4. Verification/handoff prompt
 
-1. **Chốt mục tiêu, kiểm tra repo và ranh giới xuất bản.** Đọc yêu cầu, tài liệu contract, baseline Texel Splatting, quyền sở hữu tệp, Git root và nested repo. Giữ repo upstream bên trong `web-demo/` tách biệt; không trộn lịch sử Git lồng vào repo root.
-2. **Định nghĩa contract chung.** GLB 2.0 không nén, mesh tam giác tĩnh, mét/Y-up, POSITION/NORMAL bắt buộc, base color opaque; không phụ thuộc textures, skinning, animation, meshopt, Draco hoặc GPU instancing cho V1.
-3. **Chia việc song song.** Nhánh tài sản sở hữu graphs/exports/previews và chỉ dùng TopoTopo cho geometry sản xuất; nhánh demo sở hữu `web-demo/`. Demo dùng fixture tổng hợp trước khi asset có mặt. Delegate theo các tệp tách biệt, yêu cầu kiểm tra model/thinking chính xác trước khi tạo agents.
-4. **Khảo sát baseline và xây adapter.** Giữ lựa chọn baseline upstream riêng; làm loader GLB giới hạn rõ ràng và tổng quát hóa đường render. Chạy test với mock trước, sau đó tích hợp GLB thật khi đạt checkpoint.
-5. **Lặp lại tài sản theo ảnh và phản hồi.** So preview nhiều góc với tham chiếu, sửa graph thay vì dừng ở lần sinh đầu. Ví dụ, ống điếu cày được chỉnh để có thân tre dài và bát nhỏ hơn; định hướng trong scene được cập nhật để bát hiện ra ở góc nhìn demo. Tỷ lệ ống/bát là suy luận vì không có ảnh cận cảnh. Không che giấu giới hạn topology còn lại.
-6. **Tích hợp theo checkpoint.** Mock GLB → asset kiểm chứng đầu tiên → scene đủ vật thể → kiểm tra ba mode. Đồng bộ asset bằng hash, chạy lại tests/build và QA trên đúng hash cuối cùng.
-7. **Đánh giá độc lập và công bố có giới hạn.** Kiểm tra renderer, evidence, license và nhánh xuất bản. Bản GitHub hiện tại chỉ phát hành code và mock: asset sản xuất, graph TopoTopo, ảnh tham chiếu, preview và evidence riêng tư không được đưa lên. Demo không ngụ ý mock là scene sản xuất.
+```text
+Before concluding: run unit tests, type/check, production build, and an appropriate smoke test. If UI/runtime is in scope, run the demo and exercise the main flow when possible. Compare hashes of integrated assets with their sources; distinguish test fixtures from production assets. Review the diff and both the root Git repository and any nested repositories; exclude secrets, local paths, and images/assets not approved for release. Clearly report PASS/FAIL, commands and artifact evidence, remaining limitations, what was not tested, commit, and remote status.
+```
 
-## Sửa sai và bài học
+## Workflow followed
 
-- Agent ban đầu gặp lỗi do định tuyến model `:batch`. Người dùng chỉ rõ lỗi và yêu cầu chạy lại với route chính xác. Ghi nhớ route phải là `openai-codex/gpt-6-luna` với thinking `high`, không dùng alias mơ hồ hay `:batch`; xác minh output thay vì cho rằng agent đã chạy thành công.
-- Lúc đầu phạm vi asset-only không cho phép chỉnh renderer, nhưng yêu cầu tiếp theo đã chủ động mở rộng thành hai nhánh làm song song. Contract cập nhật là nguồn sự thật hiện hành.
-- Không đợi asset thật để phát triển loader; fixture cho phép tiến triển độc lập nhưng phải luôn mang nhãn mock.
-- Một lần render thành công không đủ để chứng minh chất lượng. Sửa dựa trên preview, kiểm tra asset sau export, đồng bộ theo hash và chạy lại QA trên asset mới nhất.
-- Không phóng đại kết quả: Direct/Cubemap chưa có output ID/outline như đường Splat; không có picking/selection. Benchmark rAF phản ánh timing callback CPU/display, không phải GPU timestamp. Không có tuyên bố deploy hay hỗ trợ mobile.
+1. **Confirm goals, inspect the repository, and define publication boundaries.** Read the request, contract, Texel Splatting baseline, file ownership, root Git repository, and nested repository. Keep the upstream repository inside `web-demo/` separate; do not mix its nested Git history into the root repository.
+2. **Define a shared contract.** Uncompressed GLB 2.0, static triangle meshes, meters/Y-up, POSITION/NORMAL required, opaque base color; no V1 dependency on textures, skinning, animation, meshopt, Draco, or GPU instancing.
+3. **Divide the work in parallel.** The asset branch owns graphs/exports/previews and uses TopoTopo only for production geometry; the demo branch owns `web-demo/`. The demo uses synthetic fixtures before production assets are available. Delegate disjoint files and require checking the exact model/thinking route before creating agents.
+4. **Inspect the baseline and build the adapter.** Keep the upstream baseline choice separate; build a clearly scoped GLB loader and generalize the render paths. Run mock-based tests first, then integrate actual GLBs after the checkpoint is met.
+5. **Iterate on assets against references and feedback.** Compare multi-angle previews with references and revise the graph rather than stopping at the first generation. For example, the bamboo pipe was revised to have a longer bamboo body and a smaller bowl; its orientation in the scene was updated so the bowl is visible from the demo camera angle. Pipe/bowl proportions are inferred because there is no close-up reference. Do not hide remaining topology limitations.
+6. **Integrate by checkpoints.** Mock GLB → first validated asset → complete scene → three-mode verification. Synchronize assets by hash, then rerun tests/build and QA against the final hash.
+7. **Review independently and publish with qualifications.** Review the renderer, evidence, license, and publication branch. The current GitHub release contains code, mocks, and one explicitly authorized README showcase image: production assets, TopoTopo graphs, reference images, previews, and private evidence are otherwise excluded. The showcase depicts production assets that are not bundled and is included for display only, outside the repository's MIT license grant. The demo does not imply that mocks are the production scene.
 
-## Bằng chứng và phạm vi xác nhận
+## Corrections and lessons learned
 
-Các ghi chú/handoff của dự án trong phiên lưu kết quả chi tiết, nhưng là tài liệu nội bộ bị loại khỏi bản phát hành. Chúng ghi nhận 8 GLB TopoTopo, graphs và provenance đã được xác minh; Khronos validator không báo lỗi/cảnh báo cấu trúc; và demo đạt 7/7 tests, check, build tại thời điểm handoff. Native Chrome/WebGPU trên máy Mac đã thử Direct, Cubemap và Splat với asset hash cuối cùng, không có lỗi page/console. Handoff cũng báo khoảng cách tính năng ID/outline đã nêu trên.
+- An agent initially failed because of `:batch` model routing. The user identified the error and requested a rerun with the exact route. Remember to use `openai-codex/gpt-6-luna` with thinking `high`, not an ambiguous alias or `:batch`; verify the output rather than assuming the agent ran successfully.
+- The initial asset-only scope prohibited renderer changes, but a subsequent request deliberately expanded the project into two parallel workstreams. The updated contract is the current source of truth.
+- Do not wait for real assets to develop the loader; fixtures allow independent progress but must always be labeled as mocks.
+- One successful render is not enough to establish quality. Revise based on previews, inspect assets after export, synchronize by hash, and rerun QA on the latest assets.
+- Do not overstate results: Direct/Cubemap do not have the ID/outline output available in the Splat path; there is no picking/selection. The rAF benchmark reflects CPU/display callback timing, not GPU timestamps. No deployment or mobile support is claimed.
 
-Trong lần xác minh cho tài liệu này, chạy `npm test`, `npm run check` và `npm run build` đều thành công; output hiện tại là 6/6 test pass. Build đã đồng bộ 8 GLB từ thư mục asset cục bộ bị ignore vào `web-demo/public/production/`; những file đó không được stage hoặc commit. Đây không phải browser/GPU rerun cho lần cập nhật tài liệu.
+## Evidence and verification scope
 
-Đây là **tóm tắt evidence từ handoff phiên**, không phải cam kết tái lập bởi độc giả từ code-only repository. Trong repo công khai có thể chạy lại các lệnh demo sau; các lệnh này kiểm tra code và mock, không kiểm tra asset sản xuất đã bị loại trừ:
+The project session's notes/handoffs contain detailed results but are internal documents excluded from the release. They record 8 TopoTopo GLBs, graphs, and verified provenance; no structural errors/warnings from the Khronos validator; and 7/7 demo tests, check, and build passing at the time of handoff. Native Chrome/WebGPU on a Mac was tested in Direct, Cubemap, and Splat with the final asset hash, with no page/console errors. The handoff also reports the feature gap for ID/outline described above.
+
+For verification of this document, `npm test`, `npm run check`, and `npm run build` all succeeded; the current output is 6/6 tests passing. The build synchronized 8 GLBs from the ignored local asset directory into `web-demo/public/production/`; those files must not be staged or committed. This is not a browser/GPU rerun for this documentation update.
+
+This is an **evidence summary from the session handoff**, not a claim that readers can reproduce it from the code-only repository. The following demo commands can be rerun in the public repository; they check code and mocks, not the excluded production assets:
 
 ```sh
 cd web-demo
@@ -94,8 +94,8 @@ npm run check
 npm run build
 ```
 
-Không có kiểm chứng triển khai công khai hoặc mobile; không hàm ý tương thích tất cả trình duyệt/GPU. Các giới hạn asset đầy đủ gồm shell mở, cạnh hở/non-manifold và tiếp xúc/giao cắt giữa một số thành phần; không tuyên bố hình học watertight hoặc hoàn toàn không giao cắt.
+No public deployment or mobile verification was performed; this does not imply compatibility with all browsers/GPUs. Full asset limitations include open shells, open/non-manifold edges, and contact/intersections between some components; watertight or entirely non-intersecting geometry is not claimed.
 
-## Phạm vi tái sử dụng
+## Reuse scope
 
-Prompt mẫu cho phép dùng lại phương pháp làm việc, không tái cấp phép cho tài sản bị loại trừ. Root `LICENSE` chỉ bao phủ code và tài liệu được phát hành theo phạm vi nêu trong giấy phép; xem [`PUBLICATION.md`](PUBLICATION.md). Không tải transcript phiên, private path, ảnh tham chiếu hay tài sản TopoTopo vào bản public nếu chưa xác nhận quyền và phê duyệt riêng.
+The prompt templates allow reuse of the workflow, but do not relicense excluded assets. The root `LICENSE` covers only code and documentation released under the stated license scope; see [`PUBLICATION.md`](PUBLICATION.md). Except for the explicitly authorized, display-only README showcase image (which is not covered by the repository's MIT license), do not upload session transcripts, private paths, reference images, or TopoTopo assets to a public release without confirming rights and obtaining separate approval.
