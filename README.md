@@ -28,6 +28,10 @@ npm run build
 
 The build script checks for optional sibling production exports, but none are part of this repository. Without them, production scenes remain unavailable and the mock fixture is still available. See [`web-demo/README-TEA-STALL.md`](web-demo/README-TEA-STALL.md) for implementation and test details.
 
+## Project prompts and workflow
+
+A Vietnamese-language synthesis of the original requests, reusable prompt templates, parallel workflow, corrections, evidence and limitations is available in [`docs/PROMPTS_AND_WORKFLOW.md`](docs/PROMPTS_AND_WORKFLOW.md). It is a sanitized summary, not a transcript; it does not include private session data or assets excluded from this code-only release.
+
 ## License scope
 
 The root [`LICENSE`](LICENSE) applies to code and associated documentation in this repository only. It does **not** license third-party code beyond its own notices, or any excluded/private assets, references, models, graphs, or generated media. See the retained upstream notice at [`web-demo/LICENSE`](web-demo/LICENSE).
