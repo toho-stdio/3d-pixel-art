@@ -1,0 +1,20 @@
+{
+    "name": "texel-splatting",
+    "version": "0.0.0",
+    "license": "MIT",
+    "author": "Dylan Ebert",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "npm run sync:assets && vite build",
+        "sync:assets": "node scripts/sync-assets.mjs",
+        "test": "python3 scripts/make-mock-glb.py && node --experimental-strip-types --test tests/*.test.mjs",
+        "preview": "vite preview",
+        "check": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@webgpu/types": "^0.1.72",
+        "typescript": "^7.0.2",
+        "vite": "^7.3.6"
+    }
+}

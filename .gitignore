@@ -1,0 +1,63 @@
+# Local OS/editor and agent state
+.DS_Store
+.AppleDouble
+.LSOverride
+.idea/
+.vscode/
+*.swp
+*.swo
+/.pi/
+/.unipi/
+/AGENTS.md
+/ASSET_CONTRACT.md
+/SESSION_HANDOFF*.md
+**/SESSION_HANDOFF*.md
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+
+# Dependencies, caches, and generated outputs
+node_modules/
+**/node_modules/
+.cache/
+**/.cache/
+.npm/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+dist/
+build/
+coverage/
+test-results/
+site/demo/
+web-demo/site/demo/
+
+# Private production assets, asset definitions, references, previews, and reports
+/exports/
+/graphs/
+/previews/
+/references/
+/reports/
+/scripts/
+/vietnamese-tea-stall.topo
+/web-demo/public/production/
+/web-demo/public/icon.svg
+/web-demo/evidence/
+/web-demo/.github/
+/web-demo/.gitignore
+/web-demo/README.md
+/web-demo/bun.lock
+/web-demo/hero.jpg
+/web-demo/site/
+
+# Local project docs/logs and asset build products
+/docs/PUBLICATION.md
+/reports/*.log
